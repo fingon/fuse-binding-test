@@ -13,7 +13,18 @@ language binding provided fake file systems provide following:
 backend | read perf
 ------- | ------------------
 native ( /dev/zero ) | 16GB/s
-python-llfuse | 165MB/s (1% of /dev/zero)
-go-fuse | 315MB/s (2% of /dev/zero)
+go-fuse | 315MB/s
+python-llfuse | 165MB/s
+
+Also, testing with real 'testfile' (raspbian installation image) on my laptop;
+
+backend | read perf
+------- | ------------------
+native | ~900MB/s
+go-fuse | 290MB/s
+python-llfuse | 115MB/s
+
+It seems that Python binding uses at most 4kb block size, even with
+appropriate mount options, on OS X. It renders it relatively .. slow.
 
 

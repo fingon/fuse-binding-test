@@ -9,8 +9,8 @@
 # Copyright (c) 2017 Markus Stenberg
 #
 # Created:       Thu Aug 10 14:48:26 2017 mstenber
-# Last modified: Thu Aug 10 15:21:52 2017 mstenber
-# Edit time:     19 min
+# Last modified: Thu Aug 10 16:43:04 2017 mstenber
+# Edit time:     24 min
 #
 """This module provides test filesystem for measing performance of llfuse
 Python binding ( https://github.com/python-llfuse/python-llfuse )
@@ -26,9 +26,7 @@ import stat
 import llfuse
 
 file_inode = llfuse.ROOT_INODE + 1
-file_name = b'devzero'
-
-empty_bytes = bytes(1024000)
+file_name = b'testfile'
 
 
 class TestOperations(llfuse.Operations):
@@ -46,8 +44,8 @@ class TestOperations(llfuse.Operations):
         entry.st_uid = os.getuid()
         entry.st_ino = inode
         entry.st_blksize = 512  # 9 bits
-        entry.st_blocks = 1 << 20
-        entry.st_size = entry.st_blocks * entry.st_blocks
+        entry.st_size = os.stat('../testfile').st_size
+        entry.st_blocks = entry.st_size / entry.st_blksize
         return entry
 
     def lookup(self, parent_inode, name, ctx):
@@ -60,6 +58,8 @@ class TestOperations(llfuse.Operations):
 
     def open(self, inode, flags, ctx):
         assert inode == file_inode
+        global _f
+        _f = open('../testfile', 'rb')
         return inode
 
     def opendir(self, inode, ctx):
@@ -68,7 +68,9 @@ class TestOperations(llfuse.Operations):
 
     def read(self, fh, off, size):
         assert fh == file_inode
-        return empty_bytes[:size]
+        global _f
+        _f.seek(off)
+        return _f.read(size)
 
     def readdir(self, fh, off):
         assert fh == llfuse.ROOT_INODE

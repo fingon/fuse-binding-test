@@ -1,7 +1,7 @@
 // adaptation of the example/hello/main.go of
 // github.com/hanwen/go-fuse/fuse
 
-// instead of file.txt, 'devzero' is provided which wraps
+// instead of file.txt, 'testfile' is provided which wraps
 // gigabyte-sized set of zeroes)
 
 // Copyright 2016 the Go-FUSE Authors. All rights reserved.
@@ -14,6 +14,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
 	"github.com/hanwen/go-fuse/fuse/pathfs"
@@ -23,7 +24,7 @@ type HelloFs struct {
 	pathfs.FileSystem
 }
 
-const filename = "devzero"
+const filename = "testfile"
 
 func (me *HelloFs) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
 	switch name {
@@ -54,11 +55,13 @@ func (me *HelloFs) Open(name string, flags uint32, context *fuse.Context) (file 
 	if flags&fuse.O_ANYWRITE != 0 {
 		return nil, fuse.EPERM
 	}
+	rawfile, err := os.Open("../testfile")
+	if err != nil {
+		return nil, fuse.EIO
+	}
+	bytefile := nodefs.NewLoopbackFile(rawfile)
 	return bytefile, fuse.OK
 }
-
-var bytearray = make([]byte, 1000000000)
-var bytefile = nodefs.NewDataFile(bytearray)
 
 func main() {
 	nfs := pathfs.NewPathNodeFs(&HelloFs{FileSystem: pathfs.NewDefaultFileSystem()}, nil)
